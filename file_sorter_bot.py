@@ -63,5 +63,11 @@ async def start_command(update, context):
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("sort", sort_command))
-app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, handle_file))
-app.run_polling()
+app.add_handler(MessageHandler(
+    filters.Document.ALL | filters.PHOTO, handle_file
+))
+app.add_handler(MessageHandler(
+    filters.ALL & filters.UpdateType.BUSINESS_MESSAGE,
+    handle_file
+))
+app.run_polling(allowed_updates=Update.ALL_TYPES)
