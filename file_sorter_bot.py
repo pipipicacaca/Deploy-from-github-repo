@@ -64,4 +64,5 @@ app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("sort", sort_command))
 app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, handle_file))
-app.run_polling()
+app.run_polling(allowed_updates=["message", "business_message", "edited_business_message"])
+
