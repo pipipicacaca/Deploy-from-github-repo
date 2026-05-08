@@ -25,7 +25,7 @@ def get_channel(file_name):
     return CHANNEL_OTHER
 
 async def handle_file(update, context):
-    message = update.message
+    message = update.message or update.business_message
     if not message:
         return
     chat_id = message.chat_id
@@ -33,20 +33,21 @@ async def handle_file(update, context):
         chat_files[chat_id] = []
     file_info = None
     if message.document:
-        file_info = {"message_id": message.message_id, "chat_id": chat_id, "name": message.document.file_name or "file"}
+        file_info = {"message_id": message.message_id, "chat_id": chat_id, "name": message.document.file_name or "file", "business_id": message.business_connection_id if hasattr(message, "business_connection_id") else None}
     elif message.photo:
-        file_info = {"message_id": message.message_id, "chat_id": chat_id, "name": "photo.jpg"}
+        file_info = {"message_id": message.message_id, "chat_id": chat_id, "name": "photo.jpg", "business_id": message.business_connection_id if hasattr(message, "business_connection_id") else None}
     if file_info:
         chat_files[chat_id].append(file_info)
         await message.reply_text("OK: " + file_info["name"])
 
 async def sort_command(update, context):
-    chat_id = update.message.chat_id
+    message = update.message or update.business_message
+    chat_id = message.chat_id
     files = chat_files.get(chat_id, [])
     if not files:
-        await update.message.reply_text("No files yet!")
+        await message.reply_text("No files yet!")
         return
-    await update.message.reply_text("Sorting " + str(len(files)) + " files...")
+    await message.reply_text("Sorting " + str(len(files)) + " files...")
     count = 0
     for f in files:
         try:
@@ -55,14 +56,14 @@ async def sort_command(update, context):
         except Exception as e:
             logging.error(e)
     chat_files[chat_id] = []
-    await update.message.reply_text("Done! Sorted: " + str(count))
+    await message.reply_text("Done! Sorted: " + str(count))
 
 async def start_command(update, context):
-    await update.message.reply_text("Bot is ready! Send files and type /sort")
+    message = update.message or update.business_message
+    await message.reply_text("Bot is ready! Send files and type /sort")
 
 app = ApplicationBuilder().token(TOKEN).build()
 app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("sort", sort_command))
 app.add_handler(MessageHandler(filters.Document.ALL | filters.PHOTO, handle_file))
-app.run_polling(allowed_updates=["message", "business_message", "edited_business_message"])
-
+app.run_polling(allowed_updates=Update.ALL_TYPES)
